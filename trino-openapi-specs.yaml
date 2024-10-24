@@ -1,0 +1,136 @@
+openapi: 3.0.1
+info:
+  title: Trino Client API
+  version: '1.0.2'
+  description: API for submitting SQL queries and managing their lifecycle in Trino.
+
+servers:
+  - url: https://{host}/v1
+    variables:
+      host:
+        default: localhost:8080
+
+paths:
+  /statement:
+    post:
+      summary: Submit a SQL query
+      operationId: submitQuery
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+              example: "SELECT * FROM table"
+      responses:
+        '200':
+          description: Query submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResponse'
+      parameters:
+        - name: X-Trino-User
+          in: header
+          required: true
+          description: "The user submitting the query."
+          schema:
+            type: string
+        - name: X-Trino-Original-User
+          in: header
+          description: "The original user on whose behalf the query is submitted."
+          schema:
+            type: string
+        - name: X-Trino-Source
+          in: header
+          description: "The source of the query, used for logging and debugging."
+          schema:
+            type: string
+        - name: X-Trino-Catalog
+          in: header
+          description: "The catalog to query."
+          schema:
+            type: string
+        - name: X-Trino-Schema
+          in: header
+          description: "The schema within the catalog to query."
+          schema:
+            type: string
+        - name: X-Trino-Time-Zone
+          in: header
+          description: "The client's time zone for timestamp and time functions."
+          schema:
+            type: string
+        - name: X-Trino-Language
+          in: header
+          description: "The client's preferred language for error messages."
+          schema:
+            type: string
+        - name: X-Trino-Transaction-Id
+          in: header
+          description: "The transaction ID, if any, associated with the query."
+          schema:
+            type: string
+        - name: X-Trino-Client-Capabilities
+          in: header
+          description: "List of features supported by the client."
+          schema:
+            type: string
+
+  /query/{queryId}/results:
+    get:
+      summary: Get query results
+      operationId: getQueryResults
+      parameters:
+        - in: path
+          name: queryId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResults'
+
+  /query/{queryId}:
+    delete:
+      summary: Cancel query
+      operationId: cancelQuery
+      parameters:
+        - in: path
+          name: queryId
+          schema:
+            type: string
+          required: true
+      responses:
+        '204':
+          description: Query canceled
+
+components:
+  schemas:
+    QueryResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        nextUri:
+          type: string
+        infoUri:
+          type: string
+
+    QueryResults:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: array
+            items:
+              type: string
+        columns:
+          type: array
+          items:
+            type: string
