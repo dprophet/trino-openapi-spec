@@ -1,0 +1,62 @@
+openapi: 3.0.1
+info:
+  title: Trino OAuth2 API
+  version: '1.0.0'
+  description: OAuth2 flows for retrieving and deleting tokens in Trino.
+
+servers:
+  - url: https://{host}/oauth2
+    variables:
+      host:
+        default: https://localhost
+
+paths:
+  /token/{tokenId}:
+    get:
+      summary: Retrieve OAuth2 token
+      operationId: getOAuth2Token
+      parameters:
+        - in: path
+          name: tokenId
+          required: true
+          schema:
+            type: string
+          description: "The unique ID of the OAuth2 token request."
+      responses:
+        '200':
+          description: Token retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuth2TokenResponse'
+        '408':
+          description: Timeout waiting for token (stream reset by client)
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "stream reset by client (CANCEL)\n2024-10-24 17:32:06.058"
+                
+    delete:
+      summary: Delete OAuth2 token
+      operationId: deleteOAuth2Token
+      parameters:
+        - in: path
+          name: tokenId
+          required: true
+          schema:
+            type: string
+          description: "The unique ID of the OAuth2 token to delete."
+      responses:
+        '204':
+          description: Token deleted successfully
+
+components:
+  schemas:
+    OAuth2TokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: "The OAuth2 access token."
+          example: "eyJhbGc..............0WK_Zp_qkmn93J7RxBBE1g"
