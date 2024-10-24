@@ -141,7 +141,12 @@ components:
           description: "URI for the web UI where query details can be viewed."
         nextUri:
           type: string
-          description: "URI to retrieve the next set of results if the query is queued or running."
+          description: |
+            URI to retrieve the next set of results.
+            It could indicate the next state of the query (e.g., queued, executing).
+            Example:
+              - /v1/statement/queued/{queryId}
+              - /v1/statement/executing/{queryId}
         stats:
           type: object
           description: "Stats about the query execution state."
@@ -203,13 +208,38 @@ components:
     QueryResults:
       type: object
       properties:
+        columns:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "The name of the column."
+              type:
+                type: string
+                description: "The type of the column, e.g., varchar(75)."
+              typeSignature:
+                type: object
+                properties:
+                  rawType:
+                    type: string
+                    description: "The raw data type."
+                  arguments:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        kind:
+                          type: string
+                          description: "The kind of argument, e.g., LONG."
+                        value:
+                          type: integer
+                          description: "The value associated with the type argument."
         data:
           type: array
+          description: "The rows of data returned by the query."
           items:
             type: array
             items:
               type: string
-        columns:
-          type: array
-          items:
-            type: string
