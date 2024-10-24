@@ -29,7 +29,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/QueryResponse'
-      parameters:
+      responses:
+        '200':
+          description: Query submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResponse'
+        '401':
+          description: Unauthorized
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+                description: |
+                  Contains authentication schemes and URLs for OAuth and Basic Authentication.
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Unauthorized"      parameters:
         - name: X-Trino-User
           in: header
           required: true
