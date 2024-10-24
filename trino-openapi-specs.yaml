@@ -29,13 +29,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/QueryResponse'
-      responses:
-        '200':
-          description: Query submitted successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/QueryResponse'
         '401':
           description: Unauthorized
           headers:
@@ -96,37 +89,46 @@ paths:
           schema:
             type: string
 
-  /query/{queryId}/results:
+  /statement/{nextUri}:
     get:
-      summary: Get query results
-      operationId: getQueryResults
+      summary: Get the next set of results for a query
+      operationId: getNextResults
       parameters:
         - in: path
-          name: queryId
+          name: nextUri
           schema:
             type: string
           required: true
+          description: "The next URI retrieved from the previous query response."
       responses:
         '200':
-          description: Successful response
+          description: Successful retrieval of the next set of results
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/QueryResults'
-
-  /query/{queryId}:
-    delete:
-      summary: Cancel query
-      operationId: cancelQuery
+                $ref: '#/components/schemas/QueryResponse'
       parameters:
-        - in: path
-          name: queryId
+        - name: X-Trino-User
+          in: header
+          required: true
+          description: "The user who initiated the query."
           schema:
             type: string
+            example: "jonny123"
+        - name: X-Trino-Original-User
+          in: header
           required: true
-      responses:
-        '204':
-          description: Query canceled
+          description: "The original user for whom the query is being executed."
+          schema:
+            type: string
+            example: "jonny123"
+        - name: Authorization
+          in: header
+          required: true
+          description: "Bearer token for authentication."
+          schema:
+            type: string
+            example: "Bearer {token}"
 
 components:
   schemas:
@@ -147,6 +149,9 @@ components:
             Example:
               - /v1/statement/queued/{queryId}
               - /v1/statement/executing/{queryId}
+        partialCancelUri:
+          type: string
+          description: "URI to partially cancel a running query."
         stats:
           type: object
           description: "Stats about the query execution state."
