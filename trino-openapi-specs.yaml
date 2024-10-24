@@ -15,6 +15,8 @@ paths:
     post:
       summary: Submit a SQL query
       operationId: submitQuery
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -40,7 +42,7 @@ paths:
                     example: "https://{host}/ui/query.html?20241024_173206_01214_ghbut"
                   nextUri:
                     type: string
-                    description: "URI to retrieve the next set of results or check query progress. This URI is composed of {queryId}/{slug}/{token}""
+                    description: "URI to retrieve the next set of results or check query progress. This URI is composed of {queryId}/{slug}/{token}"
                     example: "https://{host}/v1/statement/queued/20241024_173206_01214_ghbut/y567a46c99a7e6c7edf4eddff71c7911a98d76e19/1"
                   stats:
                     $ref: '#/components/schemas/QueryStats'
@@ -72,6 +74,7 @@ paths:
             type: string
         - name: X-Trino-Original-User
           in: header
+          required: true
           description: "The original user on whose behalf the query is submitted."
           schema:
             type: string
@@ -111,6 +114,7 @@ paths:
           schema:
             type: string
 
+
   /statement/{nextUri}:
     get:
       summary: Get the next set of results for a query
@@ -129,30 +133,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/QueryResponse'
-      parameters:
-        - name: X-Trino-User
-          in: header
-          required: true
-          description: "The user who initiated the query."
-          schema:
-            type: string
-            example: "jonny123"
-        - name: X-Trino-Original-User
-          in: header
-          required: true
-          description: "The original user for whom the query is being executed."
-          schema:
-            type: string
-            example: "jonny123"
-        - name: Authorization
-          in: header
-          required: true
-          description: "Bearer token for authentication."
-          schema:
-            type: string
-            example: "Bearer {token}"
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
     QueryResponse:
       type: object
@@ -298,3 +286,4 @@ components:
           type: integer
           description: "Total wall clock time elapsed since the query started."
           example: 0
+
