@@ -223,7 +223,15 @@ components:
                 description: "The name of the column."
               type:
                 type: string
-                description: "The type of the column, e.g., varchar(75)."
+                description: |
+                  "The data type of the column, with possible values such as:
+                  - varchar(n)
+                  - bigint
+                  - boolean
+                  - timestamp
+                  - array
+                  - row
+                  Refer to the Trino documentation for a full list of supported types."
               typeSignature:
                 type: object
                 properties:
