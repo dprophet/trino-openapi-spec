@@ -28,7 +28,28 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/QueryResponse'
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: "The unique identifier for the query."
+                    example: "20241024_173206_01214_ghbut"
+                  infoUri:
+                    type: string
+                    description: "URI to view the query in the Trino web UI."
+                    example: "https://{host}/ui/query.html?20241024_173206_01214_ghbut"
+                  nextUri:
+                    type: string
+                    description: "URI to retrieve the next set of results or check query progress. This URI is composed of {queryId}/{slug}/{token}""
+                    example: "https://{host}/v1/statement/queued/20241024_173206_01214_ghbut/y567a46c99a7e6c7edf4eddff71c7911a98d76e19/1"
+                  stats:
+                    $ref: '#/components/schemas/QueryStats'
+                  warnings:
+                    type: array
+                    description: "List of warnings for the query."
+                    items:
+                      type: string
+                    example: []
         '401':
           description: Unauthorized
           headers:
@@ -41,7 +62,8 @@ paths:
             text/plain:
               schema:
                 type: string
-                example: "Unauthorized"      parameters:
+                example: "Unauthorized"
+      parameters:
         - name: X-Trino-User
           in: header
           required: true
@@ -153,63 +175,7 @@ components:
           type: string
           description: "URI to partially cancel a running query."
         stats:
-          type: object
-          description: "Stats about the query execution state."
-          properties:
-            completedSplits:
-              type: integer
-              description: "Number of splits completed."
-            cpuTimeMillis:
-              type: integer
-              description: "CPU time consumed by the query."
-            elapsedTimeMillis:
-              type: integer
-              description: "Elapsed time since the query started."
-            nodes:
-              type: integer
-              description: "Number of nodes participating in the query."
-            peakMemoryBytes:
-              type: integer
-              description: "Peak memory usage during the query."
-            physicalInputBytes:
-              type: integer
-              description: "Bytes read from disk or network."
-            physicalWrittenBytes:
-              type: integer
-              description: "Bytes written to disk or network."
-            processedBytes:
-              type: integer
-              description: "Total number of bytes processed."
-            processedRows:
-              type: integer
-              description: "Total number of rows processed."
-            queued:
-              type: boolean
-              description: "Whether the query is in the queue."
-            queuedSplits:
-              type: integer
-              description: "Number of splits queued."
-            queuedTimeMillis:
-              type: integer
-              description: "Total time the query has spent in the queue."
-            runningSplits:
-              type: integer
-              description: "Number of splits currently running."
-            scheduled:
-              type: boolean
-              description: "Whether the query is scheduled."
-            spilledBytes:
-              type: integer
-              description: "Bytes spilled to disk."
-            state:
-              type: string
-              description: "State of the query (QUEUED, RUNNING, etc.)."
-            totalSplits:
-              type: integer
-              description: "Total number of splits in the query."
-            wallTimeMillis:
-              type: integer
-              description: "Total wall time elapsed since query submission."
+          $ref: '#/components/schemas/QueryStats'
     QueryResults:
       type: object
       properties:
@@ -256,3 +222,79 @@ components:
             type: array
             items:
               type: string
+    QueryStats:   
+      type: object
+      description: "Query execution statistics."
+      properties:
+        completedSplits:
+          type: integer
+          description: "Number of splits that have completed."
+          example: 0
+        cpuTimeMillis:
+          type: integer
+          description: "CPU time used by the query."
+          example: 0
+        elapsedTimeMillis:
+          type: integer
+          description: "Total time elapsed since the query started."
+          example: 0
+        nodes:
+          type: integer
+          description: "Number of nodes involved in the query."
+          example: 0
+        peakMemoryBytes:
+          type: integer
+          description: "The peak memory usage for the query."
+          example: 0
+        physicalInputBytes:
+          type: integer
+          description: "Bytes read from disk or network."
+          example: 0
+        physicalWrittenBytes:
+          type: integer
+          description: "Bytes written to disk or network."
+          example: 0
+        processedBytes:
+          type: integer
+          description: "Total bytes processed by the query."
+          example: 0
+        processedRows:
+          type: integer
+          description: "Total rows processed by the query."
+          example: 0
+        queued:
+          type: boolean
+          description: "Indicates if the query is queued."
+          example: true
+        queuedSplits:
+          type: integer
+          description: "Number of splits currently queued."
+          example: 0
+        queuedTimeMillis:
+          type: integer
+          description: "Total time the query has spent in the queue."
+          example: 0
+        runningSplits:
+          type: integer
+          description: "Number of splits currently running."
+          example: 0
+        scheduled:
+          type: boolean
+          description: "Indicates if the query is scheduled."
+          example: false
+        spilledBytes:
+          type: integer
+          description: "Total bytes spilled to disk."
+          example: 0
+        state:
+          type: string
+          description: "Current state of the query (e.g., QUEUED, RUNNING, etc.)."
+          example: "QUEUED"
+        totalSplits:
+          type: integer
+          description: "Total number of splits for the query."
+          example: 0
+        wallTimeMillis:
+          type: integer
+          description: "Total wall clock time elapsed since the query started."
+          example: 0
