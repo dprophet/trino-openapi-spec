@@ -135,11 +135,71 @@ components:
       properties:
         id:
           type: string
-        nextUri:
-          type: string
+          description: "Unique identifier for the query."
         infoUri:
           type: string
-
+          description: "URI for the web UI where query details can be viewed."
+        nextUri:
+          type: string
+          description: "URI to retrieve the next set of results if the query is queued or running."
+        stats:
+          type: object
+          description: "Stats about the query execution state."
+          properties:
+            completedSplits:
+              type: integer
+              description: "Number of splits completed."
+            cpuTimeMillis:
+              type: integer
+              description: "CPU time consumed by the query."
+            elapsedTimeMillis:
+              type: integer
+              description: "Elapsed time since the query started."
+            nodes:
+              type: integer
+              description: "Number of nodes participating in the query."
+            peakMemoryBytes:
+              type: integer
+              description: "Peak memory usage during the query."
+            physicalInputBytes:
+              type: integer
+              description: "Bytes read from disk or network."
+            physicalWrittenBytes:
+              type: integer
+              description: "Bytes written to disk or network."
+            processedBytes:
+              type: integer
+              description: "Total number of bytes processed."
+            processedRows:
+              type: integer
+              description: "Total number of rows processed."
+            queued:
+              type: boolean
+              description: "Whether the query is in the queue."
+            queuedSplits:
+              type: integer
+              description: "Number of splits queued."
+            queuedTimeMillis:
+              type: integer
+              description: "Total time the query has spent in the queue."
+            runningSplits:
+              type: integer
+              description: "Number of splits currently running."
+            scheduled:
+              type: boolean
+              description: "Whether the query is scheduled."
+            spilledBytes:
+              type: integer
+              description: "Bytes spilled to disk."
+            state:
+              type: string
+              description: "State of the query (QUEUED, RUNNING, etc.)."
+            totalSplits:
+              type: integer
+              description: "Total number of splits in the query."
+            wallTimeMillis:
+              type: integer
+              description: "Total wall time elapsed since query submission."
     QueryResults:
       type: object
       properties:
