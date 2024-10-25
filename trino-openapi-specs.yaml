@@ -1,138 +1,14 @@
 openapi: 3.0.1
 info:
   title: Trino Client API
-  version: '1.0.2'
-  description: API for submitting SQL queries and managing their lifecycle in Trino.
+  version: '1.2.0'
+  description: API for submitting SQL queries and managing their lifecycle, as well as retrieving cluster information.
 
 servers:
   - url: https://{host}/v1
     variables:
       host:
         default: localhost:8080
-
-paths:
-  /statement:
-    post:
-      summary: Submit a SQL query
-      operationId: submitQuery
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          text/plain:
-            schema:
-              type: string
-              example: "SELECT * FROM table"
-      responses:
-        '200':
-          description: Query submitted successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    description: "The unique identifier for the query."
-                    example: "20241024_173206_01214_ghbut"
-                  infoUri:
-                    type: string
-                    description: "URI to view the query in the Trino web UI."
-                    example: "https://{host}/ui/query.html?20241024_173206_01214_ghbut"
-                  nextUri:
-                    type: string
-                    description: "URI to retrieve the next set of results or check query progress. This URI is composed of {queryId}/{slug}/{token}"
-                    example: "https://{host}/v1/statement/queued/20241024_173206_01214_ghbut/y567a46c99a7e6c7edf4eddff71c7911a98d76e19/1"
-                  stats:
-                    $ref: '#/components/schemas/QueryStats'
-                  warnings:
-                    type: array
-                    description: "List of warnings for the query."
-                    items:
-                      type: string
-                    example: []
-        '401':
-          description: Unauthorized
-          headers:
-            WWW-Authenticate:
-              schema:
-                type: string
-                description: |
-                  Contains authentication schemes and URLs for OAuth and Basic Authentication.
-          content:
-            text/plain:
-              schema:
-                type: string
-                example: "Unauthorized"
-      parameters:
-        - name: X-Trino-User
-          in: header
-          required: true
-          description: "The user submitting the query."
-          schema:
-            type: string
-        - name: X-Trino-Original-User
-          in: header
-          required: true
-          description: "The original user on whose behalf the query is submitted."
-          schema:
-            type: string
-        - name: X-Trino-Source
-          in: header
-          description: "The source of the query, used for logging and debugging."
-          schema:
-            type: string
-        - name: X-Trino-Catalog
-          in: header
-          description: "The catalog to query."
-          schema:
-            type: string
-        - name: X-Trino-Schema
-          in: header
-          description: "The schema within the catalog to query."
-          schema:
-            type: string
-        - name: X-Trino-Time-Zone
-          in: header
-          description: "The client's time zone for timestamp and time functions."
-          schema:
-            type: string
-        - name: X-Trino-Language
-          in: header
-          description: "The client's preferred language for error messages."
-          schema:
-            type: string
-        - name: X-Trino-Transaction-Id
-          in: header
-          description: "The transaction ID, if any, associated with the query."
-          schema:
-            type: string
-        - name: X-Trino-Client-Capabilities
-          in: header
-          description: "List of features supported by the client."
-          schema:
-            type: string
-
-
-  /statement/{nextUri}:
-    get:
-      summary: Get the next set of results for a query
-      operationId: getNextResults
-      parameters:
-        - in: path
-          name: nextUri
-          schema:
-            type: string
-          required: true
-          description: "The next URI retrieved from the previous query response."
-      responses:
-        '200':
-          description: Successful retrieval of the next set of results
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/QueryResponse'
 
 components:
   securitySchemes:
@@ -164,52 +40,6 @@ components:
           description: "URI to partially cancel a running query."
         stats:
           $ref: '#/components/schemas/QueryStats'
-    QueryResults:
-      type: object
-      properties:
-        columns:
-          type: array
-          items:
-            type: object
-            properties:
-              name:
-                type: string
-                description: "The name of the column."
-              type:
-                type: string
-                description: |
-                  "The data type of the column, with possible values such as:
-                  - varchar(n)
-                  - bigint
-                  - boolean
-                  - timestamp
-                  - array
-                  - row
-                  Refer to the Trino documentation for a full list of supported types."
-              typeSignature:
-                type: object
-                properties:
-                  rawType:
-                    type: string
-                    description: "The raw data type."
-                  arguments:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        kind:
-                          type: string
-                          description: "The kind of argument, e.g., LONG."
-                        value:
-                          type: integer
-                          description: "The value associated with the type argument."
-        data:
-          type: array
-          description: "The rows of data returned by the query."
-          items:
-            type: array
-            items:
-              type: string
     QueryStats:   
       type: object
       description: "Query execution statistics."
@@ -286,4 +116,553 @@ components:
           type: integer
           description: "Total wall clock time elapsed since the query started."
           example: 0
+
+paths:
+  /statement:
+    post:
+      summary: Submit a SQL query
+      operationId: submitQuery
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+              example: "SELECT * FROM table"
+      responses:
+        '200':
+          description: Query submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResponse'
+        '401':
+          description: Unauthorized
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+                description: |
+                  Contains authentication schemes and URLs for OAuth and Basic Authentication.
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Unauthorized"
+
+  /statement/queued/{queryId}/{slug}/{token}:
+    get:
+      summary: Get queued query results
+      operationId: getQueuedResults
+      parameters:
+        - in: path
+          name: queryId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: token
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful retrieval of queued query results
+
+  /statement/executing/{queryId}/{slug}/{token}:
+    get:
+      summary: Get executing query results
+      operationId: getExecutingResults
+      parameters:
+        - in: path
+          name: queryId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: token
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful retrieval of executing query results
+
+  /statement/executing/partialCancel/{queryId}/{slug}/{token}:
+    delete:
+      summary: Partially cancel an executing query
+      operationId: partialCancelQuery
+      parameters:
+        - in: path
+          name: queryId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: token
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Query partially cancelled successfully
+
+  /query/{queryId}:
+    get:
+      summary: Retrieve query details
+      operationId: getQueryDetails
+      parameters:
+        - in: path
+          name: queryId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Query details retrieved successfully
+
+    delete:
+      summary: Cancel a query
+      operationId: cancelQuery
+      parameters:
+        - in: path
+          name: queryId
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Query cancelled successfully
+
+  /query/{queryId}/killed:
+    get:
+      summary: Check if a query was killed
+      operationId: checkQueryKilled
+      parameters:
+        - in: path
+          name: queryId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Query killed status retrieved
+
+  /query/{queryId}/preempted:
+    get:
+      summary: Check if a query was preempted
+      operationId: checkQueryPreempted
+      parameters:
+        - in: path
+          name: queryId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Query preempted status retrieved
+
+  /queryState/{queryId}:
+    get:
+      summary: Get query state
+      operationId: getQueryState
+      parameters:
+        - in: path
+          name: queryId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Query state retrieved
+
+  /resourceGroupState/{resourceGroupId}:
+    get:
+      summary: Retrieve resource group state
+      operationId: getResourceGroupState
+      parameters:
+        - in: path
+          name: resourceGroupId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Resource group state retrieved
+
+  /memory:
+    get:
+      summary: Get memory stats
+      operationId: getMemoryStats
+      responses:
+        '200':
+          description: Memory statistics retrieved
+
+  /node:
+    get:
+      summary: Get node details
+      operationId: getNodeDetails
+      responses:
+        '200':
+          description: Node details retrieved
+
+  /info:
+    get:
+      summary: Get server information
+      operationId: getServerInfo
+      responses:
+        '200':
+          description: Server information retrieved
+
+  /info/state:
+    get:
+      summary: Get server state
+      operationId: getServerState
+      responses:
+        '200':
+          description: Server state retrieved
+
+    put:
+      summary: Update server state
+      operationId: updateServerState
+      responses:
+        '204':
+          description: Server state updated
+
+  /info/coordinator:
+    get:
+      summary: Get coordinator info
+      operationId: getCoordinatorInfo
+      responses:
+        '200':
+          description: Coordinator information retrieved
+
+  /status:
+    get:
+      summary: Get cluster status
+      operationId: getClusterStatus
+      responses:
+        '200':
+          description:Here is the completion of the OpenAPI document with the remaining paths:
+
+```yaml
+        '200':
+          description: Cluster status retrieved
+
+  /maxActiveSplits:
+    get:
+      summary: Get maximum active splits
+      operationId: getMaxActiveSplits
+      responses:
+        '200':
+          description: Maximum active splits retrieved
+
+  /task/{taskId}:
+    post:
+      summary: Submit a task
+      operationId: submitTask
+      parameters:
+        - in: path
+          name: taskId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Task submitted successfully
+
+    get:
+      summary: Get task details
+      operationId: getTaskDetails
+      parameters:
+        - in: path
+          name: taskId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Task details retrieved
+
+  /task/{taskId}/status:
+    get:
+      summary: Get task status
+      operationId: getTaskStatus
+      parameters:
+        - in: path
+          name: taskId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Task status retrieved
+
+  /task/{taskId}/dynamicfilters:
+    get:
+      summary: Get task dynamic filters
+      operationId: getTaskDynamicFilters
+      parameters:
+        - in: path
+          name: taskId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Task dynamic filters retrieved
+
+  /task/{taskId}/fail:
+    post:
+      summary: Fail a task
+      operationId: failTask
+      parameters:
+        - in: path
+          name: taskId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Task failed
+
+  /task/{taskId}/results/{bufferId}/{token}:
+    get:
+      summary: Get task results
+      operationId: getTaskResults
+      parameters:
+        - in: path
+          name: taskId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: bufferId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: token
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Task results retrieved
+
+  /task/{taskId}/results/{bufferId}/{token}/acknowledge:
+    post:
+      summary: Acknowledge task result retrieval
+      operationId: acknowledgeTaskResults
+      parameters:
+        - in: path
+          name: taskId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: bufferId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: token
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Task results acknowledged
+
+  /task/pruneCatalogs:
+    post:
+      summary: Prune catalogs for a task
+      operationId: pruneTaskCatalogs
+      responses:
+        '204':
+          description: Catalogs pruned successfully
+
+  /thread:
+    get:
+      summary: Get thread details
+      operationId: getThreadDetails
+      responses:
+        '200':
+          description: Thread details retrieved
+
+  /ui/api/cluster:
+    get:
+      summary: Get cluster information from UI API
+      operationId: getUIClusterInfo
+      responses:
+        '200':
+          description: Cluster information retrieved
+
+  /ui/api/stats:
+    get:
+      summary: Get statistics from UI API
+      operationId: getUIStats
+      responses:
+        '200':
+          description: UI statistics retrieved
+
+  /ui/login.html:
+    get:
+      summary: UI login page
+      operationId: getUILoginPage
+      responses:
+        '200':
+          description: UI login page retrieved
+
+  /ui/logout:
+    get:
+      summary: UI logout page
+      operationId: getUILogoutPage
+      responses:
+        '200':
+          description: UI logout page retrieved
+
+  /ui/api/query/{queryId}:
+    get:
+      summary: Get query info via UI API
+      operationId: getUIQueryInfo
+      parameters:
+        - in: path
+          name: queryId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Query info retrieved successfully
+
+  /ui/api/query/{queryId}/killed:
+    get:
+      summary: Get query killed status via UI API
+      operationId: getUIQueryKilled
+      parameters:
+        - in: path
+          name: queryId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Query killed status retrieved
+
+  /ui/api/query/{queryId}/preempted:
+    get:
+      summary: Get query preempted status via UI API
+      operationId: getUIQueryPreempted
+      parameters:
+        - in: path
+          name: queryId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Query preempted status retrieved
+
+  /ui/{path: .*}:
+    get:
+      summary: Get UI path
+      operationId: getUIPath
+      parameters:
+        - in: path
+          name: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: UI path retrieved
+
+  /ui/assets/{path: .*}:
+    get:
+      summary: Get UI assets
+      operationId: getUIAssets
+      parameters:
+        - in: path
+          name: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: UI assets retrieved
+
+  /ui/vendor/{path: .*}:
+    get:
+      summary: Get vendor assets for UI
+      operationId: getVendorAssets
+      parameters:
+        - in: path
+          name: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Vendor assets retrieved
+
+  /ui/api/worker/{nodeId}/status:
+    get:
+      summary: Get worker status via UI API
+      operationId: getUIWorkerStatus
+      parameters:
+        - in: path
+          name: nodeId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Worker status retrieved
+
+  /ui/api/worker/{nodeId}/thread:
+    get:
+      summary: Get worker threads via UI API
+      operationId: getUIWorkerThreads
+      parameters:
+        - in: path
+          name: nodeId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Worker threads retrieved
+
+  /v1/proxy:
+    get:
+      summary: Get proxy info
+      operationId: getProxyInfo
+      responses:
+        '200':
+          description: Proxy info retrieved
+
+    delete:
+      summary: Delete proxy info
+      operationId: deleteProxyInfo
+      responses:
+        '204':
+          description: Proxy info deleted successfully
 
