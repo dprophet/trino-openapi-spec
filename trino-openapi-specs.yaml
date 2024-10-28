@@ -5,7 +5,7 @@ info:
   description: API for submitting SQL queries and managing their lifecycle, as well as retrieving cluster information.
 
 servers:
-  - url: https://{host}/v1
+  - url: https://{host}
     variables:
       host:
         default: localhost:8080
@@ -118,7 +118,7 @@ components:
           example: 0
 
 paths:
-  /statement:
+  /v1/statement:
     post:
       summary: Submit a SQL query
       operationId: submitQuery
@@ -152,7 +152,7 @@ paths:
                 type: string
                 example: "Unauthorized"
 
-  /statement/queued/{queryId}/{slug}/{token}:
+  /v1/statement/queued/{queryId}/{slug}/{token}:
     get:
       summary: Get queued query results
       operationId: getQueuedResults
@@ -176,7 +176,7 @@ paths:
         '200':
           description: Successful retrieval of queued query results
 
-  /statement/executing/{queryId}/{slug}/{token}:
+  /v1/statement/executing/{queryId}/{slug}/{token}:
     get:
       summary: Get executing query results
       operationId: getExecutingResults
@@ -200,7 +200,7 @@ paths:
         '200':
           description: Successful retrieval of executing query results
 
-  /statement/executing/partialCancel/{queryId}/{slug}/{token}:
+  /v1/statement/executing/partialCancel/{queryId}/{slug}/{token}:
     delete:
       summary: Partially cancel an executing query
       operationId: partialCancelQuery
@@ -224,7 +224,7 @@ paths:
         '204':
           description: Query partially cancelled successfully
 
-  /query/{queryId}:
+  /v1/query/{queryId}:
     get:
       summary: Retrieve query details
       operationId: getQueryDetails
@@ -251,7 +251,7 @@ paths:
         '204':
           description: Query cancelled successfully
 
-  /query/{queryId}/killed:
+  /v1/query/{queryId}/killed:
     get:
       summary: Check if a query was killed
       operationId: checkQueryKilled
@@ -265,7 +265,7 @@ paths:
         '200':
           description: Query killed status retrieved
 
-  /query/{queryId}/preempted:
+  /v1/query/{queryId}/preempted:
     get:
       summary: Check if a query was preempted
       operationId: checkQueryPreempted
@@ -279,7 +279,7 @@ paths:
         '200':
           description: Query preempted status retrieved
 
-  /queryState/{queryId}:
+  /v1/queryState/{queryId}:
     get:
       summary: Get query state
       operationId: getQueryState
@@ -293,7 +293,7 @@ paths:
         '200':
           description: Query state retrieved
 
-  /resourceGroupState/{resourceGroupId}:
+  /v1/resourceGroupState/{resourceGroupId}:
     get:
       summary: Retrieve resource group state
       operationId: getResourceGroupState
@@ -307,7 +307,7 @@ paths:
         '200':
           description: Resource group state retrieved
 
-  /memory:
+  /v1/memory:
     get:
       summary: Get memory stats
       operationId: getMemoryStats
@@ -315,7 +315,7 @@ paths:
         '200':
           description: Memory statistics retrieved
 
-  /node:
+  /v1/node:
     get:
       summary: Get node details
       operationId: getNodeDetails
@@ -323,7 +323,7 @@ paths:
         '200':
           description: Node details retrieved
 
-  /info:
+  /v1/info:
     get:
       summary: Get server information
       operationId: getServerInfo
@@ -331,7 +331,7 @@ paths:
         '200':
           description: Server information retrieved
 
-  /info/state:
+  /v1/info/state:
     get:
       summary: Get server state
       operationId: getServerState
@@ -346,7 +346,7 @@ paths:
         '204':
           description: Server state updated
 
-  /info/coordinator:
+  /v1/info/coordinator:
     get:
       summary: Get coordinator info
       operationId: getCoordinatorInfo
@@ -354,19 +354,14 @@ paths:
         '200':
           description: Coordinator information retrieved
 
-  /status:
+  /v1/status:
     get:
       summary: Get cluster status
       operationId: getClusterStatus
       responses:
         '200':
-          description:Here is the completion of the OpenAPI document with the remaining paths:
-
-```yaml
-        '200':
           description: Cluster status retrieved
-
-  /maxActiveSplits:
+  /v1/maxActiveSplits:
     get:
       summary: Get maximum active splits
       operationId: getMaxActiveSplits
@@ -374,7 +369,7 @@ paths:
         '200':
           description: Maximum active splits retrieved
 
-  /task/{taskId}:
+  /v1/task/{taskId}:
     post:
       summary: Submit a task
       operationId: submitTask
@@ -401,7 +396,7 @@ paths:
         '200':
           description: Task details retrieved
 
-  /task/{taskId}/status:
+  /v1/task/{taskId}/status:
     get:
       summary: Get task status
       operationId: getTaskStatus
@@ -415,7 +410,7 @@ paths:
         '200':
           description: Task status retrieved
 
-  /task/{taskId}/dynamicfilters:
+  /v1/task/{taskId}/dynamicfilters:
     get:
       summary: Get task dynamic filters
       operationId: getTaskDynamicFilters
@@ -429,7 +424,7 @@ paths:
         '200':
           description: Task dynamic filters retrieved
 
-  /task/{taskId}/fail:
+  /v1/task/{taskId}/fail:
     post:
       summary: Fail a task
       operationId: failTask
@@ -443,7 +438,7 @@ paths:
         '200':
           description: Task failed
 
-  /task/{taskId}/results/{bufferId}/{token}:
+  /v1/task/{taskId}/results/{bufferId}/{token}:
     get:
       summary: Get task results
       operationId: getTaskResults
@@ -467,7 +462,7 @@ paths:
         '200':
           description: Task results retrieved
 
-  /task/{taskId}/results/{bufferId}/{token}/acknowledge:
+  /v1/task/{taskId}/results/{bufferId}/{token}/acknowledge:
     post:
       summary: Acknowledge task result retrieval
       operationId: acknowledgeTaskResults
@@ -491,7 +486,7 @@ paths:
         '204':
           description: Task results acknowledged
 
-  /task/pruneCatalogs:
+  /v1/task/pruneCatalogs:
     post:
       summary: Prune catalogs for a task
       operationId: pruneTaskCatalogs
@@ -499,7 +494,7 @@ paths:
         '204':
           description: Catalogs pruned successfully
 
-  /thread:
+  /v1/thread:
     get:
       summary: Get thread details
       operationId: getThreadDetails
@@ -658,11 +653,9 @@ paths:
       responses:
         '200':
           description: Proxy info retrieved
-
     delete:
       summary: Delete proxy info
       operationId: deleteProxyInfo
       responses:
         '204':
           description: Proxy info deleted successfully
-
